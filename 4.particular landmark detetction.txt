@@ -1,0 +1,49 @@
+#code with hand track and fps and int values of landmarks location (cx, cy) and particular landmark detection
+
+
+
+
+import cv2
+import mediapipe as mp
+import time
+
+cap = cv2.VideoCapture(0)                         #capturing video from webcam "0"
+
+mphands = mp.solutions.hands                      # making an object of class
+hands = mphands.Hands()                           #invoking a function of class with the help of its object
+mpDraw=mp.solutions.drawing_utils                 #to draw the landmarks in the hands
+
+pTime = 0
+cTime = 0
+
+
+while True:
+    success, img = cap.read()
+    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)      #converting BGR image to RGB image for "hands" object
+    results = hands.process(imgRGB)                    #processing each frame and storing it
+    #print(result.multi_hand_landmarks)    to check when it is detecting the hands with its 3 axis coordinates
+
+    if results.multi_hand_landmarks:                      #to do things only when the hands are detected on the screen
+        for handLms in results.multi_hand_landmarks:      #to extract information from the results
+            for id, lm in enumerate(handLms.landmark):
+                # here id is the landmark no 0-20 and lm is its 3 axis coordinates
+                # lm values are in decimal no so we convert it into int pixel values
+                h,w,c=img.shape                         # height width and channels
+                cx,cy=int(lm.x*w),int(lm.y*h)           #converting them into int values for all landmarks
+                #print(id,cx,cy)  will give id no with int values of 2 axis
+                if id==4:            # to work on a particular landmark
+                    cv2.circle(img, (cx, cy), 15, (255, 0, 255), cv2.FILLED) #highlight thumb top
+
+            #mpDraw.draw_landmarks(img , handLms)   will draw only hand landmarks without its connections
+            mpDraw.draw_landmarks(img , handLms, mphands.HAND_CONNECTIONS)
+
+    cTime = time.time()
+    fps = 1 / (cTime - pTime)
+    pTime = cTime
+
+    cv2.putText(img, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3,
+                (255, 0, 255), 3)
+
+    cv2.imshow("image", img)
+    cv2.waitKey(1)
+
